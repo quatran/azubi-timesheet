@@ -185,5 +185,5 @@ class Controller
   end
 end
 
- contr = Controller.new
- contr.start
+ conr = Controller.new
+ conr.start
