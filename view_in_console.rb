@@ -57,8 +57,11 @@ class ViewInConsole
   def input_export_data
     print 'Name:'
     name = $stdin.gets.chomp
-    print 'Working hours carryover:'
-    carryover = $stdin.gets.chomp
+
+    begin
+      print 'Working hours carryover(Stundenübertrag):'
+      carryover = $stdin.gets.chomp
+    end while !numeric? carryover
     return name, carryover.to_f
   end
   def getAnswer message
@@ -161,6 +164,9 @@ class ViewInConsole
     true
   rescue  ArgumentError
     false
+  end
+  def numeric? string
+    Float(string) != nil rescue false
   end
   def is_integer? string
     Integer(string)
