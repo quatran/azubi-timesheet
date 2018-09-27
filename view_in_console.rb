@@ -52,7 +52,7 @@ class ViewInConsole
   end
   def getComment
     print "Comment: "
-    return getInputFromConsole
+    return $stdin.gets.chomp
   end
   def input_export_data
     print 'Name:'

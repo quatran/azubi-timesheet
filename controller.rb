@@ -273,13 +273,14 @@ class Controller
         def_b_style = sheet.styles.add_style default_cell.merge({:b => true})
         cell_style = sheet.styles.add_style default_cell.merge(:border => hair_border)
         cell_b_style = sheet.styles.add_style default_cell.merge(:b => true, :border => hair_border)
-
+        cell_green_style = sheet.styles.add_style default_cell.merge(:bg_color => '7DC148', :border => hair_border)
+        cell_b_green_style = sheet.styles.add_style default_cell.merge(:b => true, :bg_color => '7DC148', :border => hair_border)
         row8_style = [0, 0, cell_b_style, cell_b_style, 0,0,0]
-        row9_style = [0, 0, cell_b_style, cell_b_style, 0,0,0, cell_b_style, 0, cell_b_style]
+        row9_style = [0, 0, cell_b_style, cell_b_style, 0,0,0, cell_b_style, 0, cell_b_green_style]
         row11_style = [0, 0, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
           cell_b_style, cell_b_style, cell_b_style, cell_b_style]
-        record_style = [0 ,cell_style ,cell_style, cell_style ,cell_style, cell_style,
-          cell_style ,cell_style, cell_style ,cell_style, cell_style, cell_style, 0]
+        record_style = [0 ,cell_style ,cell_style, cell_green_style ,cell_green_style, cell_green_style,
+          cell_green_style ,cell_style, cell_style ,cell_style, cell_style, cell_style, 0]
         soll_style = [0,0, def_b_style, def_style, 0,0,0, def_b_style, def_style]
         add_beginning_rows_to sheet, big_bold_style
 
