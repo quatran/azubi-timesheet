@@ -1,56 +1,52 @@
 
 class ViewInConsole
-  def startView
+  def start_view
     print "What would you like to do? "
-    return getInputFromConsole
+    return $stdin.gets.chomp.downcase
   end
-  def getNewRecordInput
-    return getStartDay, getEndDay, getBreakStart, getBreakEnd, getComment
-  end
-  def getChosenRecordFrom numOfRecords
-    return getValidInteger numOfRecords, "Choose a record between 0 and #{numOfRecords-1}: "
-
+  def new_record_input
+    return start_day_input, end_day_input, break_start_input, break_end_input, comment_input
   end
 
-  def getChoiceAndInput
+  def key_value_input
     loop do
-      availableCommands 2
-      choice = getInputFromConsole
-      case choice
+      available_commands 2
+      key = $stdin.gets.chomp.downcase
+      case key
       when 'back','exit'
         return 'back', ''
       when 'date'
-        return 'date', getDate
-      when 'startday'
-        return 'startDay', getStartDay
-      when 'endday'
-        return 'endDay', getEndDay
-      when 'breakstart'
-        return 'breakStart', getBreakStart
-      when 'breakend'
-        return 'breakEnd', getBreakEnd
+        return 'date', date_input
+      when 'startday', 'start_day'
+        return 'start_day', start_day_input
+      when 'endday', 'end_day'
+        return 'end_day', end_day_input
+      when 'breakstart', 'break_start'
+        return 'break_start', break_start_input
+      when 'breakend', 'break_end'
+        return 'break_end', break_end_input
       when 'comment'
-        return 'comment', getComment
+        return 'comment', comment_input
       end
     end
   end
 
-  def getDate
-    return getValidDate "Date(dd.mm.yyyy): "
+  def date_input
+    return valid_date_input "Date(dd.mm.yyyy): "
   end
-  def getStartDay
-    return getValidTime "Came to work at(hh:mm): "
+  def start_day_input
+    return valid_time_input "Came to work at(hh:mm): "
   end
-  def getEndDay
-    return getValidTime "Left work at: "
+  def end_day_input
+    return valid_time_input "Left work at: "
   end
-  def getBreakStart
-    return getValidTime "Went for a break at: "
+  def break_start_input
+    return valid_time_input "Went for a break at: "
   end
-  def getBreakEnd
-    return getValidTime "Came back from break at: "
+  def break_end_input
+    return valid_time_input "Came back from break at: "
   end
-  def getComment
+  def comment_input
     print "Comment: "
     return $stdin.gets.chomp
   end
@@ -62,92 +58,76 @@ class ViewInConsole
       print 'Working hours carryover(Stundenübertrag):'
       carryover = $stdin.gets.chomp
     end while !numeric? carryover
+
     return name, carryover.to_f
   end
-  def getAnswer message
+  def answer_to question
     begin
-      print message
-      answer = getInputFromConsole
+      print question
+      answer = $stdin.gets.chomp.downcase
     end while (answer != "no") && (answer != "yes")
     return answer == "yes" ? true : false
   end
-  def getAnswerSpecial
-    return getAnswer "Is it a special day?(Yes/No): "
+  def answer_special
+    return answer_to "Is it a special day?(Yes/No): "
   end
-  def areYouSure?
-    return getAnswer "Are you sure?(Yes/No): "
+  def are_you_sure?
+    return answer_to "Are you sure?(Yes/No): "
   end
-  def addNewRecord?
-    return getAnswer "Add a new Record?(Yes/No): "
+  def add_new_record?
+    return answer_to "Add a new Record?(Yes/No): "
   end
-  def getSpecialCase
+  def special_input
     begin
-      availableCommands 1
-      input = getInputFromConsole
-    end while !['school', 'holiday', 'vacation', 'ill', 'other', 'exit'].include? input
-    return input
+      available_commands 1
+      special = $stdin.gets.chomp.downcase
+    end while !['school', 'holiday', 'vacation', 'ill', 'other', 'exit'].include? special
+    return special
   end
-  def printOneRecord record
-    if record.nil?
-
-    else
-      puts '---'
-      record.each do |key, value|
-        puts key + ' : ' + value
-      end
-      puts '---'
+  def print_record record
+    puts '---'
+    record.each do |key, value|
+      puts key + ' : ' + value
     end
+    puts '---'
   end
-  def printAllRecords records
+  def print_all_records records
     records.each do |record|
-      puts printOneRecord record
+      puts print_record record
     end
   end
-  def printNumOfRecords num, fileName
-    puts "--- There are #{num} records in #{fileName} ---"
+  def print_record_count num, file_name
+    puts "--- There are #{num} records in #{file_name} ---"
   end
-  def recordNotExists
+  def record_doesnt_exist
     puts "A record with this date does not exist."
   end
-  def recordExists
+  def record_exists
     puts "A record with this date already exists."
   end
-  def commandNotValid
-    puts "That is not a valid command. Type 'HELP' for available commands."
-  end
-  def availableCommands level
-    puts "Available commands: add, edit, delete, printOne, printAll, printNumOfRecords or EXIT" if level == 0
+  def available_commands level
+    puts "Available commands: add, edit, delete, sort, export, count, printOne, printAll or EXIT" if level == 0
     puts "Available commands: holiday, vacation, school,ill or EXIT. " if level == 1
-    puts "Available commands: date, startDay, endDay, breakStart, breakEnd, comment or EXIT" if level == 2
+    puts "Available commands: date, start_day, end_day, break_start, break_end, comment or EXIT" if level == 2
   end
   def goodbye
     puts "Goodbye!"
   end
-  def clearConsole
+  def clear_console
     system "clear" or system "cls"
   end
-  def getInputFromConsole
-    $stdin.gets.chomp.downcase
-  end
-  def getValidInteger numOfRecords, message
-    begin
-      print message
-      input = $stdin.gets.chomp
-    end while (!is_integer? input) || (!input.to_i.between?(0, numOfRecords-1))
-    return input.to_i
-  end
 
-  def getValidDate message
+  def valid_date_input message
     begin
       print message
-      input = getInputFromConsole
+      input = $stdin.gets.chomp.downcase
     end while !valid_date? input
     return input
   end
-  def getValidTime message
+  def valid_time_input message
     begin
       print message
-      input = getInputFromConsole
+      input = $stdin.gets.chomp.downcase
     end while !valid_time? input
     return input
   end
@@ -167,11 +147,5 @@ class ViewInConsole
   end
   def numeric? string
     Float(string) != nil rescue false
-  end
-  def is_integer? string
-    Integer(string)
-    true
-  rescue ArgumentError
-    false
   end
 end

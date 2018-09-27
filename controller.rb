@@ -3,172 +3,178 @@ load 'view_in_console.rb'
 require 'axlsx'
 require 'fileutils'
 class Controller
-  @@jsonFileName = 'timetable.json'
-  @@jsonModel = Model.new(@@jsonFileName)
-  @@jsonHashArray = @@jsonModel.getJsonHash
-  @@newConsoleView = ViewInConsole.new
-  @@newConsoleView.clearConsole
+  @@json_file_name = 'timetable.json'
+  @@json_model = Model.new(@@json_file_name)
+  @@json_hash_array = @@json_model.create_json_hash
+  @@console_view = ViewInConsole.new
+  @@console_view.clear_console
   def start
     loop do
-      chosenCase = checkNumOfRecords ? @@newConsoleView.startView : addRecord
-      case chosenCase
+      chosen_case = check_record_count ? @@console_view.start_view : add_record
+      case chosen_case
       when 'exit'
-        @@newConsoleView.clearConsole
-        @@newConsoleView.goodbye
+        @@console_view.clear_console
+        @@console_view.goodbye
         break
       when 'add'
-        append addNewRecord
+        append add_new_record
       when 'edit'
-        date = @@newConsoleView.getDate
-        if(recordExistsInArray? date)
-          (edit getExistingRecord date)
+        date = @@console_view.date_input
+        if(record_exists? date)
+          (edit existing_record date)
         else
-          (@@newConsoleView.recordNotExists)
-          addRecord
+          (@@console_view.record_doesnt_exist)
+          add_record
         end
-      when 'printnum', 'printnumber', 'printnumofrecords', 'printnumberofrecords'
-        printNumberOfRecords @@jsonModel.getNumOfRecords @@jsonHashArray
+      when 'count', 'printnum', 'printnumber'
+        print_record_count
       when 'printone', 'printonerecord'
-          date = @@newConsoleView.getDate
-          (recordExistsInArray? date) ? (printOneComplete getExistingRecord date) : (@@newConsoleView.recordNotExists)
+          date = @@console_view.date_input
+          (record_exists? date) ? (print_full_record existing_record date) : (@@console_view.record_doesnt_exist)
       when 'printall', 'printallrecords'
-          @@newConsoleView.printAllRecords @@jsonHashArray
+          @@console_view.print_all_records @@json_hash_array
       when 'delete'
-          date = @@newConsoleView.getDate
-          (recordExistsInArray? date) ? (deleteRecordWith date) : (@@newConsoleView.recordNotExists)
+          date = @@console_view.date_input
+          (record_exists? date) ? (delete_record_with date) : (@@console_view.record_doesnt_exist)
       when 'sort'
-        @@jsonModel.sortArrayByDate @@jsonHashArray
+        sort_array
       when 'export'
+        sort_array
         export_sheet
       when 'help', 'clear'
-        @@newConsoleView.clearConsole
-        @@newConsoleView.availableCommands 0
+        @@console_view.clear_console
+        @@console_view.available_commands 0
       else
-        @@newConsoleView.clearConsole
-        @@newConsoleView.availableCommands 0
+        @@console_view.clear_console
+        @@console_view.available_commands 0
       end
-      saveArray
+      save_array
     end
   end
-
-  def saveArray
-    @@jsonModel.prettyAndSaveArrayToFile @@jsonHashArray
+  def sort_array
+    @@json_model.sort_by_date @@json_hash_array
+  end
+  def save_array
+    @@json_model.make_pretty_and_save @@json_hash_array
   end
   def append record
-    @@jsonModel.appendThisToThat record, @@jsonHashArray unless record.nil?
+    @@json_model.append_this_to_that record, @@json_hash_array unless record.nil?
   end
-  def addRecord
-    return @@newConsoleView.addNewRecord? ? (append addNewRecord) : 'exit'
+  def add_record
+    return @@console_view.add_new_record? ? (append add_new_record) : 'exit'
   end
-  def addNewRecord
-    date = @@newConsoleView.getDate
-    if(recordExistsInArray? date)
-      @@newConsoleView.recordExists
+  def add_new_record
+    date = @@console_view.date_input
+    if(record_exists? date)
+      @@console_view.record_exists
     else
-      return @@newConsoleView.getAnswerSpecial ? (createSpecialRecord date) : (createNormalRecord date)
+      return @@console_view.answer_special ? (create_special_record date) : (create_normal_record date)
     end
   end
-  def createSpecialRecord date
-    specialCase = @@newConsoleView.getSpecialCase
-    if specialCase != 'exit'
-      return @@jsonModel.createSpecialJsonRecord(date, @@newConsoleView.getComment)
+  def create_special_record date
+    special_case = @@console_view.special_input
+    if special_case != 'exit'
+      return @@json_model.create_special_json_record(date, @@console_view.comment_input)
     end
   end
-  def createNormalRecord date
-    startDay, endDay, breakStart, breakEnd, comment=  @@newConsoleView.getNewRecordInput
-    return @@jsonModel.createNewJsonRecord(date, startDay, endDay, breakStart, breakEnd, comment)
+  def create_normal_record date
+    start_day, end_day, break_start, break_end, comment=  @@console_view.new_record_input
+    return @@json_model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
   end
-  def recordExistsInArray? value
-    return @@jsonHashArray.any? { |hash| hash['date'].include?(value) }
+  def record_exists? value
+    return @@json_hash_array.any? { |hash| hash['date'].include?(value) }
   end
-  def getExistingRecord value
-    return @@jsonHashArray.select { |hash| hash['date'].include?(value) }.first
+  def existing_record value
+    return @@json_hash_array.select { |hash| hash['date'].include?(value) }.first
   end
-  def deleteRecordWith value
-      printOneComplete getExistingRecord value
-      @@jsonModel.deleteRecordFromArray @@jsonHashArray, value unless !@@newConsoleView.areYouSure?
+  def delete_record_with value
+      print_full_record existing_record value
+      @@json_model.delete_record_with value, @@json_hash_array unless !@@console_view.are_you_sure?
   end
-  def checkNumOfRecords
-    num = @@jsonModel.getNumOfRecords @@jsonHashArray
+  def check_record_count
+    num = @@json_hash_array.count
     if num <= 0
-      printNumberOfRecords num
+      print_record_count
       return false
     end
     return true
   end
   def edit record
-    printOneComplete record
+    print_full_record record
     date = record["date"]
-    if @@newConsoleView.getAnswerSpecial
-      newRecord = createSpecialRecord date
-      record.replace(newRecord) unless newRecord.nil?
+    if @@console_view.answer_special
+      new_record = create_special_record date
+      record.replace(new_record) unless new_record.nil?
     elsif record.has_key? "special"
-      record.replace(createNormalRecord date)
+      record.replace(create_normal_record date)
     else
       loop do
-        choice, input = @@newConsoleView.getChoiceAndInput
-        break if (choice == 'back') || (choice == 'exit')
-        record[choice] = input
+        key, value = @@console_view.key_value_input
+        break if (key == 'back') || (key == 'exit')
+        record[key] = value
       end
     end
   end
-  def printNumberOfRecords num
-    @@newConsoleView.printNumOfRecords num, @@jsonFileName
+  def print_record_count
+    num = @@json_hash_array.count
+    @@console_view.print_record_count num, @@json_file_name
   end
-  def printOneComplete record
+  def print_full_record record
 
-    clone = addTimeDifferencesTo record
-    @@newConsoleView.printOneRecord clone
+    clone = make_complete record
+    @@console_view.print_record clone
   end
-  def addTimeDifferencesTo record
+  def make_complete record
     clone = record.clone
-    index = @@jsonHashArray.index(record)
-    breakTotal = getBreakTotal record
-    dayTotal = getDayTotal record, breakTotal
-    workQuota = getWorkQuota dayTotal
-    sign = workQuota < 0 ? '' : '+'
-    clone["breakTotal"] = "#{breakTotal}"
-    clone["dayTotal"] = "#{dayTotal}"
-    clone["workQuota"] = "#{sign}#{workQuota}"
-    if isFriday? record["date"]
-      weekTotal = getWeekTotal  index
-      clone["weekTotal"] = "#{weekTotal}"
+
+    break_total = calculate_break_total record
+    day_total = calculate_day_total record, break_total
+    work_quota = calculate_work_quota day_total
+
+    clone["break_total"] = "#{break_total}"
+    clone["day_total"] = "#{day_total}"
+    sign = work_quota < 0 ? '' : '+'
+    clone["work_quota"] = "#{sign}#{work_quota}"
+    if is_friday? record["date"]
+      record_index = @@json_hash_array.index(record)
+      week_total = calculate_week_total  record_index
+      clone["week_total"] = "#{week_total}"
     end
     return clone
   end
 
-  def getHour string
+  def hour_from string
     return DateTime.strptime(string, '%H:%M').hour
   rescue ArgumentError
     return 0
   end
-  def getMin string
+  def min_from string
     return DateTime.strptime(string, '%H:%M').min
   rescue ArgumentError
     return 0
   end
-  def getTimeDifference startTime, endTime
-    hour = getHour(endTime) - getHour(startTime)
-    min = getMin(endTime) - getMin(startTime)
+  def difference_between startTime, endTime
+    hour = hour_from(endTime) - hour_from(startTime)
+    min = min_from(endTime) - min_from(startTime)
     return (hour*60 + min)/60.to_f
   end
-  def getBreakTotal record
+  def calculate_break_total record
     return 0.0 if record.has_key? "special"
-    breakStart = record["breakStart"]
-    breakEnd = record["breakEnd"]
-    return getTimeDifference(breakStart, breakEnd)
+    break_start = record["break_start"]
+    break_end = record["break_end"]
+    return difference_between(break_start, break_end)
   end
-  def getDayTotal record, breakTotal
+  def calculate_day_total record, break_total
     return 8.0 if record.has_key? "special"
-    startDay = record["startDay"]
-    endDay = record["endDay"]
-    dayTotal = getTimeDifference(startDay, endDay) - breakTotal
-    return getTimeDifference(startDay, endDay) - breakTotal
+    start_day = record["start_day"]
+    end_day = record["end_day"]
+    day_total = difference_between(start_day, end_day) - break_total
+    return day_total
   end
-  def getWorkQuota dayTotal
-    return dayTotal.to_f - 8
+  def calculate_work_quota day_total
+    return day_total.to_f - 8
   end
-  def isFriday? string
+  def is_friday? string
     date = Date.parse string
     return date.friday?
   end
@@ -180,17 +186,17 @@ class Controller
     return 'Donnerstag' if date.thursday?
     return 'Freitag' if date.friday?
   end
-  def getWeekTotal recordIndex
-    weekTotal = 0
+  def calculate_week_total record_index
+    week_total = 0
     5.times do
-      if recordIndex >= 0
-        breakTotal = getBreakTotal  @@jsonHashArray[recordIndex]
-        dayTotal = getDayTotal @@jsonHashArray[recordIndex], breakTotal
-        weekTotal+= dayTotal
-        recordIndex -= 1
+      if record_index >= 0
+        break_total = calculate_break_total  @@json_hash_array[record_index]
+        day_total = calculate_day_total @@json_hash_array[record_index], break_total
+        week_total+= day_total
+        record_index -= 1
       end
     end
-    return weekTotal
+    return week_total
   end
   def extract_month_from string
     date = Date.parse string
@@ -231,7 +237,7 @@ class Controller
     end
   end
 
-  def num_of_hours string
+  def weekdays_count string
     date = Date.parse string
     d1 = Date.new(date.year, date.month, 1)
     d2 = Date.new(date.year, date.month, -1)
@@ -250,10 +256,10 @@ class Controller
 
   end
   def export_sheet
-    string = @@jsonHashArray[0]['date']
-    name, carryover = @@newConsoleView.input_export_data
+    string = @@json_hash_array[0]['date']
+    name, carryover = @@console_view.input_export_data
     month = extract_month_from string
-    total_of_hours = num_of_hours string
+    total_of_hours = weekdays_count string
     save_axlsx name, month, carryover, total_of_hours
   end
   def save_axlsx name, month, carryover, total_of_hours
@@ -261,66 +267,74 @@ class Controller
     wb = p.workbook
     setup = {:fit_to_width => 1,:fit_to_height => 1, :orientation => :portrait, :paper_height => "297mm", :paper_width => "210mm"}
     options = {:grid_lines => false}
-      wb.add_worksheet(:name => "SUSE Timesheet", :page_setup => setup, :print_options => options) do |sheet|
+    wb.add_worksheet(:name => "SUSE Timesheet", :page_setup => setup, :print_options => options) do |sheet|
+      center = { :horizontal=> :center, :vertical => :center }
+      default_cell = { :alignment => center, :sz => 10 }
+      hair_border =  { :style => :hair, :color => "00" }
+      border_cell = default_cell.merge({:border => hair_border})
 
-        center = { :horizontal=> :center, :vertical => :center }
-        default_cell = { :alignment => center, :sz => 10 }
-        hair_border =  { :style => :hair, :color => "00" }
+      big_bold_style = sheet.styles.add_style :sz => 16, :b => true, :alignment => center
 
-        big_bold_style = sheet.styles.add_style :sz => 16, :b => true, :alignment => center
+      def_style = sheet.styles.add_style default_cell
+      def_b_style = sheet.styles.add_style default_cell.merge({:b => true})
 
-        def_style = sheet.styles.add_style default_cell
-        def_b_style = sheet.styles.add_style default_cell.merge({:b => true})
-        cell_style = sheet.styles.add_style default_cell.merge(:border => hair_border)
-        cell_b_style = sheet.styles.add_style default_cell.merge(:b => true, :border => hair_border)
-        cell_green_style = sheet.styles.add_style default_cell.merge(:bg_color => '7DC148', :border => hair_border)
-        cell_b_green_style = sheet.styles.add_style default_cell.merge(:b => true, :bg_color => '7DC148', :border => hair_border)
-        row8_style = [0, 0, cell_b_style, cell_b_style, 0,0,0]
-        row9_style = [0, 0, cell_b_style, cell_b_style, 0,0,0, cell_b_style, 0, cell_b_green_style]
-        row11_style = [0, 0, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
-          cell_b_style, cell_b_style, cell_b_style, cell_b_style]
-        record_style = [0 ,cell_style ,cell_style, cell_green_style ,cell_green_style, cell_green_style,
-          cell_green_style ,cell_style, cell_style ,cell_style, cell_style, cell_style, 0]
-        soll_style = [0,0, def_b_style, def_style, 0,0,0, def_b_style, def_style]
-        add_beginning_rows_to sheet, big_bold_style
+      cell_style = sheet.styles.add_style border_cell
+      cell_b_style = sheet.styles.add_style border_cell.merge(:b => true)
+
+      cell_green_style = sheet.styles.add_style border_cell.merge(:bg_color => '7DC148')
+      cell_b_green_style = sheet.styles.add_style border_cell.merge(:b => true, :bg_color => '7DC148')
+
+      row8_style = [0, 0, cell_b_style, cell_b_style, 0,0,cell_b_style]
+      row9_style = [0, 0, cell_b_style, cell_b_style, 0,0,0, cell_b_style, 0, cell_b_green_style,cell_b_green_style]
+      row11_style = [0, 0, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
+        cell_b_style, cell_b_style, cell_b_style, cell_b_style]
+
+      record_style = [0 ,cell_style ,cell_style, cell_green_style ,cell_green_style, cell_green_style,
+        cell_green_style ,cell_style, cell_style ,cell_style, cell_style, cell_style, 0]
+      carryover_style = [0,0,0,0,0,0,0, cell_b_style,0, cell_style, cell_style]
+      soll_style = [0,0, def_b_style, def_style, 0,0,0, def_b_style, def_style]
+
+      add_beginning_rows_to sheet, big_bold_style
+
+      sheet.add_row ['', '','Name:', name,'','',''], :style => row8_style
+      sheet.merge_cells("D8:G8")
 
 
-        sheet.add_row ['', '','Name:', name, '','',''], :style => row8_style
-        sheet.merge_cells("D8:G8")
-        sheet.add_row ['', '','Monat:', month,'','','','Stundenübertrag','',carryover], :style => row9_style
-        sheet.merge_cells("D9:G9")
-        sheet.merge_cells("H9:I9")
-        sheet.merge_cells("J9:K9")
-        sheet.add_row []
+      sheet.add_row ['', '','Monat:', month,'','','','Stundenübertrag','',carryover,''], :style => row9_style
+      sheet.merge_cells("D9:G9")
+      sheet.merge_cells("H9:I9")
+      sheet.merge_cells("J9:K9")
+      sheet.add_row []
 
-        sheet.add_row ['','', 'Datum', 'Kommt', 'Geht', 'P-Beginn', 'P-Ende',
-          'Pause', 'AZ', 'GES-Stunden','', 'Kommentar         '], :style => row11_style
-        sheet.merge_cells("J11:K11")
-        sheet.add_row []
+      sheet.add_row ['','', 'Datum', 'Kommt', 'Geht', 'P-Beginn', 'P-Ende',
+        'Pause', 'AZ', 'GES-Stunden','', 'Kommentar         '], :style => row11_style
+      sheet.merge_cells("J11:K11")
+      sheet.add_row []
 
-        worked_hours = 0
-        @@jsonHashArray.each do |record|
-          day = day_german record['date']
-          clone = addTimeDifferencesTo record
-          sheet.add_row ['' , "#{day} ", record['date'], clone['startDay'], clone['endDay'],
-              clone['breakStart'], clone['breakEnd'], clone['breakTotal'], clone['dayTotal'],
-              clone['workQuota'], clone['weekTotal'], clone['comment'],''], :style => record_style
-          worked_hours += clone['dayTotal'].to_f
-        end
-        ################
-        sheet.add_row []
-        sheet.add_row ['', '','','','','','','Stundenübertrag','',(worked_hours-total_of_hours)+carryover, ''], :style => [0,0,0,0,0,0,0, cell_b_style,0, cell_style, 0]
-        sheet.merge_cells("H#{sheet.rows.last.index+1}:I#{sheet.rows.last.index+1}")
-        sheet.merge_cells("J#{sheet.rows.last.index+1}:K#{sheet.rows.last.index+1}")
-        3.times {sheet.add_row []}
-        sheet.add_row ['','','Soll:', total_of_hours,'','','', 'Gesamt:', worked_hours], :style => soll_style
-        2.times {sheet.add_row []}
-        sheet.add_row ['','','Unterschrift Auszubildender', '','','', 'Unterschrift Betreuer', '','','', 'Unterschrift Ausbilder']
-        #  :style =>
-        sheet.add_row []
-        sheet.add_row ['','','____________________', '','','', '____________________', '','','', '____________________']
-        sheet.column_widths nil, 10, 10, 8, 8, 8, 8, 8, 8, 8, 8, 22
+      worked_hours = 0
+      @@json_hash_array.each do |record|
+        day = day_german record['date']
+        clone = make_complete record
+        sheet.add_row ['' , "#{day} ", record['date'], clone['start_day'], clone['end_day'],
+            clone['break_start'], clone['break_end'], clone['break_total'], clone['day_total'],
+            clone['work_quota'], clone['week_total'], clone['comment'],''], :style => record_style
+        worked_hours += clone['day_total'].to_f
+      end
 
+      sheet.add_row []
+      sheet.add_row ['', '','','','','','','Stundenübertrag','',(worked_hours-total_of_hours)+carryover, ''], :style => carryover_style
+      sheet.merge_cells("H#{sheet.rows.last.index+1}:I#{sheet.rows.last.index+1}")
+      sheet.merge_cells("J#{sheet.rows.last.index+1}:K#{sheet.rows.last.index+1}")
+      3.times {sheet.add_row []}
+
+      sheet.add_row ['','','Soll:', total_of_hours,'','','', 'Gesamt:', worked_hours], :style => soll_style
+      2.times {sheet.add_row []}
+
+      sheet.add_row ['','','Unterschrift Auszubildender', '','','', 'Unterschrift Betreuer', '','','', 'Unterschrift Ausbilder']
+      #  :style =>
+      sheet.add_row []
+      sheet.add_row ['','','____________________', '','','', '____________________', '','','', '____________________']
+      sheet.column_widths nil, 10, 10, 8, 8, 8, 8, 8, 8, 8, 8, 22, nil
     end
     FileUtils.mkdir_p 'Timetable_output' unless File.exists? 'Timetable_output'
     p.serialize('Timetable_output/timetable.xlsx')
