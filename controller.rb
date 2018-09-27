@@ -1,5 +1,5 @@
-load 'Model.rb'
-load 'ViewInConsole.rb'
+load 'model.rb'
+load 'view_in_console.rb'
 require 'axlsx'
 require 'fileutils'
 class Controller
@@ -38,9 +38,8 @@ class Controller
           (recordExistsInArray? date) ? (deleteRecordWith date) : (@@newConsoleView.recordNotExists)
       when 'sort'
         @@jsonModel.sortArrayByDate @@jsonHashArray
-      when 'exportsheet'
-
-        save_axlsx
+      when 'export'
+        export_sheet
       when 'help', 'clear'
         @@newConsoleView.clearConsole
         @@newConsoleView.availableCommands 0
@@ -231,6 +230,7 @@ class Controller
       #image.start_at 1, 1
     end
   end
+
   def num_of_hours string
     date = Date.parse string
     d1 = Date.new(date.year, date.month, 1)
@@ -284,7 +284,7 @@ class Controller
         add_beginning_rows_to sheet, big_bold_style
 
 
-        sheet.add_row ['', '','Name:', 'a_name', '','',''], :style => row8_style
+        sheet.add_row ['', '','Name:', name, '','',''], :style => row8_style
         sheet.merge_cells("D8:G8")
         sheet.add_row ['', '','Monat:', month,'','','','Stundenübertrag','',carryover], :style => row9_style
         sheet.merge_cells("D9:G9")
@@ -297,19 +297,22 @@ class Controller
         sheet.merge_cells("J11:K11")
         sheet.add_row []
 
+        worked_hours = 0
         @@jsonHashArray.each do |record|
           day = day_german record['date']
           clone = addTimeDifferencesTo record
           sheet.add_row ['' , "#{day} ", record['date'], clone['startDay'], clone['endDay'],
-          clone['breakStart'], clone['breakEnd'], clone['breakTotal'], clone['dayTotal'],
-          clone['workQuota'], clone['weekTotal'], clone['comment'],''], :style => record_style
+              clone['breakStart'], clone['breakEnd'], clone['breakTotal'], clone['dayTotal'],
+              clone['workQuota'], clone['weekTotal'], clone['comment'],''], :style => record_style
+          worked_hours += clone['dayTotal'].to_f
         end
+        ################
         sheet.add_row []
-        sheet.add_row ['', '','','','','','','Stundenübertrag','','number', ''], :style => [0,0,0,0,0,0,0, cell_b_style,0, cell_style, 0]
+        sheet.add_row ['', '','','','','','','Stundenübertrag','',(worked_hours-total_of_hours)+carryover, ''], :style => [0,0,0,0,0,0,0, cell_b_style,0, cell_style, 0]
         sheet.merge_cells("H#{sheet.rows.last.index+1}:I#{sheet.rows.last.index+1}")
         sheet.merge_cells("J#{sheet.rows.last.index+1}:K#{sheet.rows.last.index+1}")
         3.times {sheet.add_row []}
-        sheet.add_row ['','','Soll:', 'a_number','','','', 'Gesamt:', 'a_number'], :style => soll_style
+        sheet.add_row ['','','Soll:', total_of_hours,'','','', 'Gesamt:', worked_hours], :style => soll_style
         2.times {sheet.add_row []}
         sheet.add_row ['','','Unterschrift Auszubildender', '','','', 'Unterschrift Betreuer', '','','', 'Unterschrift Ausbilder']
         #  :style =>
@@ -325,4 +328,3 @@ class Controller
 end
  conr = Controller.new
  conr.start
- print conr.num_of_working_days "03.09.2018"

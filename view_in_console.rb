@@ -59,6 +59,7 @@ class ViewInConsole
     name = $stdin.gets.chomp
     print 'Working hours carryover:'
     carryover = $stdin.gets.chomp
+    return name, carryover.to_f
   end
   def getAnswer message
     begin
