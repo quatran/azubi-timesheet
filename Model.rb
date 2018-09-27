@@ -59,9 +59,6 @@ class Model
     array.sort_by! { |record| (getDateFrom record) }
   end
 
-
-
-
   def readCsvFile csvFile
     return CSV.read(csvFile, col_sep: '|', headers: true)
   end
@@ -72,5 +69,4 @@ class Model
       end
     end
   end
-
 end
