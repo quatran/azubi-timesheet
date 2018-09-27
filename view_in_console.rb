@@ -54,7 +54,12 @@ class ViewInConsole
     print "Comment: "
     return getInputFromConsole
   end
-
+  def input_export_data
+    print 'Name:'
+    name = $stdin.gets.chomp
+    print 'Working hours carryover:'
+    carryover = $stdin.gets.chomp
+  end
   def getAnswer message
     begin
       print message

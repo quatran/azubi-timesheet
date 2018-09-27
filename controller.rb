@@ -231,6 +231,14 @@ class Controller
       #image.start_at 1, 1
     end
   end
+  def num_of_hours string
+    date = Date.parse string
+    d1 = Date.new(date.year, date.month, 1)
+    d2 = Date.new(date.year, date.month, -1)
+    wdays = [0, 6]
+    weekdays = (d1..d2).reject { |day| wdays.include? day.wday}
+    return weekdays.count * 8
+  end
   def add_beginning_rows_to sheet, big_bold_style
     add_image_from '../suse_logo.png', sheet
     5.times {sheet.add_row []}
@@ -242,11 +250,13 @@ class Controller
 
   end
   def export_sheet
+    string = @@jsonHashArray[0]['date']
     name, carryover = @@newConsoleView.input_export_data
-    month = extract_month_from @@jsonHashArray[0]['date']
-    save_axlsx name, month, carryover
+    month = extract_month_from string
+    total_of_hours = num_of_hours string
+    save_axlsx name, month, carryover, total_of_hours
   end
-  def save_axlsx name, month, carryover
+  def save_axlsx name, month, carryover, total_of_hours
     p = Axlsx::Package.new
     wb = p.workbook
     setup = {:fit_to_width => 1,:fit_to_height => 1, :orientation => :portrait, :paper_height => "297mm", :paper_width => "210mm"}
@@ -315,3 +325,4 @@ class Controller
 end
  conr = Controller.new
  conr.start
+ print conr.num_of_working_days "03.09.2018"
