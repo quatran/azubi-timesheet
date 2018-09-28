@@ -389,7 +389,7 @@ class Controller
       ]
       sheet.column_widths nil, 10, 10, 8, 8, 8, 8, 8, 8, 8, 8, 22, nil
     end
-    FileUtils.mkdir_p 'export' unless File.exist? 'Timetable_output'
+    FileUtils.mkdir_p 'export' unless File.exist? 'export'
     p.serialize('export/timetable.xlsx')
   end
 
