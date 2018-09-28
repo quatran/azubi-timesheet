@@ -1,4 +1,3 @@
-
 class ViewInConsole
   def start_view
     print 'What would you like to do? '
