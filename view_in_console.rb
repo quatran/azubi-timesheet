@@ -1,11 +1,15 @@
 
 class ViewInConsole
   def start_view
-    print "What would you like to do? "
-    return $stdin.gets.chomp.downcase
+    print 'What would you like to do? '
+    $stdin.gets.chomp.downcase
   end
+
   def new_record_input
-    return start_day_input, end_day_input, break_start_input, break_end_input, comment_input
+    [
+      start_day_input, end_day_input, break_start_input,
+      break_end_input, comment_input
+    ]
   end
 
   def key_value_input
@@ -13,7 +17,7 @@ class ViewInConsole
       available_commands 2
       key = $stdin.gets.chomp.downcase
       case key
-      when 'back','exit'
+      when 'back', 'exit'
         return 'back', ''
       when 'date'
         return 'date', date_input
@@ -32,24 +36,30 @@ class ViewInConsole
   end
 
   def date_input
-    return valid_date_input "Date(dd.mm.yyyy): "
+    valid_date_input 'Date(dd.mm.yyyy): '
   end
+
   def start_day_input
-    return valid_time_input "Came to work at(hh:mm): "
+    valid_time_input 'Came to work at(hh:mm): '
   end
+
   def end_day_input
-    return valid_time_input "Left work at: "
+    valid_time_input 'Left work at: '
   end
+
   def break_start_input
-    return valid_time_input "Went for a break at: "
+    valid_time_input 'Went for a break at: '
   end
+
   def break_end_input
-    return valid_time_input "Came back from break at: "
+    valid_time_input 'Came back from break at: '
   end
+
   def comment_input
-    print "Comment: "
-    return $stdin.gets.chomp
+    print 'Comment: '
+    $stdin.gets.chomp
   end
+
   def input_export_data
     print 'Name:'
     name = $stdin.gets.chomp
@@ -61,60 +71,82 @@ class ViewInConsole
 
     return name, carryover.to_f
   end
-  def answer_to question
+
+  def answer_to(question)
     begin
       print question
       answer = $stdin.gets.chomp.downcase
     end while (answer != "no") && (answer != "yes")
-    return answer == "yes" ? true : false
+    answer == 'yes'
   end
+
   def answer_special
-    return answer_to "Is it a special day?(Yes/No): "
+    answer_to 'Is it a special day?(Yes/No): '
   end
+
   def are_you_sure?
-    return answer_to "Are you sure?(Yes/No): "
+    answer_to 'Are you sure?(Yes/No): '
   end
+
   def add_new_record?
-    return answer_to "Add a new Record?(Yes/No): "
+    answer_to 'Add a new Record?(Yes/No): '
   end
+
   def special_input
-    begin
+    special = 'exit'
+    loop do
       available_commands 1
       special = $stdin.gets.chomp.downcase
-    end while !['school', 'holiday', 'vacation', 'ill', 'other', 'exit'].include? special
-    return special
+      break if %w[school holiday vacation ill other exit].include? special
+    end
+    special
   end
-  def print_record record
+
+  def print_record(record)
     puts '---'
     record.each do |key, value|
       puts key + ' : ' + value
     end
     puts '---'
   end
-  def print_all_records records
+
+  def print_all_records(records)
     records.each do |record|
       puts print_record record
     end
   end
-  def print_record_count num, file_name
+
+  def print_record_count(num, file_name)
     puts "--- There are #{num} records in #{file_name} ---"
   end
+
   def record_doesnt_exist
-    puts "A record with this date does not exist."
+    puts 'A record with this date does not exist.'
   end
+
   def record_exists
-    puts "A record with this date already exists."
+    puts 'A record with this date already exists.'
   end
-  def available_commands level
-    puts "Available commands: add, edit, delete, sort, export, count, printOne, printAll or EXIT" if level == 0
-    puts "Available commands: holiday, vacation, school,ill or EXIT. " if level == 1
-    puts "Available commands: date, start_day, end_day, break_start, break_end, comment or EXIT" if level == 2
+
+  def available_commands(level)
+    if level.zero?
+      puts 'Available commands:
+        add, edit, delete, sort, export, count, printOne, printAll or EXIT'
+    elsif level == 1
+      puts 'Available commands:
+        holiday, vacation, school,ill, other or EXIT'
+    else
+      puts 'Available commands:
+        date, start_day, end_day, break_start, break_end, comment or EXIT'
+    end
   end
+
   def goodbye
-    puts "Goodbye!"
+    puts 'Goodbye!'
   end
+
   def clear_console
-    system "clear" or system "cls"
+    system 'clear'
   end
 
   def valid_date_input message
@@ -124,6 +156,7 @@ class ViewInConsole
     end while !valid_date? input
     return input
   end
+
   def valid_time_input message
     begin
       print message
@@ -131,6 +164,7 @@ class ViewInConsole
     end while !valid_time? input
     return input
   end
+
   def valid_date? string
     format = '%d.%m.%Y'
     DateTime.strptime(string, format)
@@ -138,14 +172,18 @@ class ViewInConsole
   rescue ArgumentError
     false
   end
-  def valid_time? string
+
+  def valid_time?(string)
     format = '%H:%M'
     DateTime.strptime(string, format)
     true
-  rescue  ArgumentError
+  rescue ArgumentError
     false
   end
-  def numeric? string
-    Float(string) != nil rescue false
+
+  def numeric?(string)
+    !Float(string).nil?
+  rescue ArgumentError
+    false
   end
 end
