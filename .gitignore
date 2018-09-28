@@ -1,5 +1,3 @@
 *.json
 .directory
-.idea/
-
-Timetable_output/
+export/
