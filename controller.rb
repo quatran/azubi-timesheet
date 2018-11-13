@@ -394,6 +394,3 @@ class Controller
   end
 
 end
-
-conr = Controller.new
-conr.start

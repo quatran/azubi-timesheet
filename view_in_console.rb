@@ -1,6 +1,6 @@
 class ViewInConsole
   def start_view
-    print 'What would you like to do? '
+    print "\nWhat would you like to do? "
     $stdin.gets.chomp.downcase
   end
 
