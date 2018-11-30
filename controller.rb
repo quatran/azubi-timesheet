@@ -41,6 +41,7 @@ class Controller
       when 'export'
         sort_array
         export_sheet
+      when 'open', 'libreoffice'
         open_in_libreoffice
       when 'help', 'clear'
         @@console_view.clear_console
@@ -54,7 +55,7 @@ class Controller
   end
 
   def open_in_libreoffice
-    system 'libreoffice export/timetable.xlsx' if @@console_view.answer_to("\nOpen LibreOffice? ")
+    system 'libreoffice export/timetable.xlsx' if @@console_view.answer_to("\n Open LibreOffice?(yes/no) ")
   end
 
   def sort_array

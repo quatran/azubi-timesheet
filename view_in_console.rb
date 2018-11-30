@@ -1,6 +1,6 @@
 class ViewInConsole
   def start_view
-    print "\nWhat would you like to do? "
+    print "\n\tAZUBI Timetable\n What would you like to do? "
     $stdin.gets.chomp.downcase
   end
 
@@ -130,7 +130,7 @@ class ViewInConsole
   def available_commands(level)
     if level.zero?
       puts 'Available commands:
-        add, edit, delete, sort, export, count, printOne, printAll or EXIT'
+      add, edit, delete, sort, export, open, count, printOne, printAll or EXIT'
     elsif level == 1
       puts 'Available commands:
         holiday, vacation, school,ill, other or EXIT'
