@@ -3,39 +3,43 @@ load 'view_in_console.rb'
 require 'axlsx'
 require 'fileutils'
 class Controller
-  @@json_file_name = 'timetable.json'
-  @@json_model = Model.new(@@json_file_name)
-  @@hash_array = @@json_model.create_json_hash
-  @@console_view = ViewInConsole.new
-  @@console_view.clear_console
+
+  def initialize(json_file_name)
+    @json_file_name = json_file_name
+    @model = Model.new(json_file_name)
+    @hash_array = @model.create_json_hash
+    @console_view = ViewInConsole.new
+    @console_view.clear_console
+  end
+
   def start
     loop do
-      chosen_case = check_record_count ? @@console_view.start_view : add_record
+      chosen_case = check_record_count ? @console_view.start_view : add_record
       case chosen_case
       when 'exit'
-        @@console_view.clear_console
-        @@console_view.goodbye
+        @console_view.clear_console
+        @console_view.goodbye
         break
       when 'add'
         append add_new_record
       when 'edit'
-        date = @@console_view.date_input
+        date = @console_view.date_input
         if(record_exists? date)
           (edit existing_record date)
         else
-          @@console_view.record_doesnt_exist
+          @console_view.record_doesnt_exist
           add_record
         end
       when 'count', 'printnum', 'printnumber'
         print_record_count
       when 'printone', 'printonerecord'
-          date = @@console_view.date_input
-          (record_exists? date) ? (print_full_record existing_record date) : (@@console_view.record_doesnt_exist)
+          date = @console_view.date_input
+          (record_exists? date) ? (print_full_record existing_record date) : (@console_view.record_doesnt_exist)
       when 'printall', 'printallrecords'
-          @@console_view.print_all_records @@hash_array
+        @console_view.print_all_records @hash_array
       when 'delete'
-          date = @@console_view.date_input
-          (record_exists? date) ? (delete_record_with date) : (@@console_view.record_doesnt_exist)
+          date = @console_view.date_input
+          (record_exists? date) ? (delete_record_with date) : (@console_view.record_doesnt_exist)
       when 'sort'
         sort_array
       when 'export'
@@ -44,72 +48,72 @@ class Controller
       when 'open', 'libreoffice'
         open_in_libreoffice
       when 'help', 'clear'
-        @@console_view.clear_console
-        @@console_view.available_commands 0
+        @console_view.clear_console
+        @console_view.available_commands 0
       else
-        @@console_view.clear_console
-        @@console_view.available_commands 0
+        @console_view.clear_console
+        @console_view.available_commands 0
       end
       save_array
     end
   end
 
   def open_in_libreoffice
-    system 'libreoffice export/timetable.xlsx' if @@console_view.answer_to("\n Open LibreOffice?(yes/no) ")
+    system 'libreoffice export/timetable.xlsx' if @console_view.answer_to("\n Open LibreOffice?(yes/no) ")
   end
 
   def sort_array
-    @@json_model.sort_by_date @@hash_array
+    @model.sort_by_date @hash_array
   end
 
   def save_array
-    @@json_model.make_pretty_and_save @@hash_array
+    @model.make_pretty_and_save @hash_array
   end
 
   def append(record)
-    @@json_model.append_this_to_that record, @@hash_array unless record.nil?
+    @model.append_this_to_that record, @hash_array unless record.nil?
   end
 
   def add_record
-    @@console_view.add_new_record? ? (append add_new_record) : 'exit'
+    @console_view.add_new_record? ? (append add_new_record) : 'exit'
   end
 
   def add_new_record
-    date = @@console_view.date_input
+    date = @console_view.date_input
     if (record_exists? date)
-      @@console_view.record_exists
+      @console_view.record_exists
     else
-      return @@console_view.answer_special ? (create_special_record date) : (create_normal_record date)
+      return @console_view.answer_special ? (create_special_record date) : (create_normal_record date)
     end
   end
 
   def create_special_record(date)
-    special_case = @@console_view.special_input
-    if special_case != 'exit'
-      return @@json_model.create_special_json_record(date, @@console_view.comment_input)
-    end
+    special_case = @console_view.special_input
+    return if special_case == 'exit'
+
+    @model.create_special_json_record(date, special_case)
   end
 
   def create_normal_record(date)
-    start_day, end_day, break_start, break_end, comment=  @@console_view.new_record_input
-    return @@json_model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
+    start_day, end_day, break_start, break_end, comment=  @console_view.new_record_input
+    return @model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
   end
 
   def record_exists?(date)
-    @@hash_array.any? { |hash| hash['date'].include?(date) }
+    @hash_array.any? { |hash| hash['date'].include?(date) }
   end
 
   def existing_record date
-    return @@hash_array.select { |hash| hash['date'].include?(date) }.first
+    return @hash_array.select { |hash| hash['date'].include?(date) }.first
   end
 
   def delete_record_with value
-      print_full_record existing_record value
-      @@json_model.delete_record_with value, @@hash_array unless !@@console_view.are_you_sure?
+    print_full_record(existing_record(value))
+    @model.delete_record_with value, @hash_array if @console_view.sure?
   end
 
   def check_record_count
-    num = @@hash_array.count
+    num = @hash_array.count
     if num <= 0
       print_record_count
       return false
@@ -120,18 +124,18 @@ class Controller
   def edit record
     print_full_record record
     date = record['date']
-    if @@console_view.answer_special
+    if @console_view.answer_special
       new_record = create_special_record date
       record.replace(new_record) unless new_record.nil?
     elsif record.key? 'special'
       record.replace(create_normal_record(date))
     else
       loop do
-        key, value = @@console_view.key_value_input
+        key, value = @console_view.key_value_input
         break if (key == 'back') || (key == 'exit')
 
         if key == 'date' && (record_exists? value)
-          @@console_view.record_exists
+          @console_view.record_exists
         else
           record[key] = value
         end
@@ -140,14 +144,14 @@ class Controller
   end
 
   def print_record_count
-    num = @@hash_array.count
-    @@console_view.print_record_count num, @@json_file_name
+    num = @hash_array.count
+    @console_view.print_record_count num, @json_file_name
   end
 
   def print_full_record record
 
     clone = make_complete record
-    @@console_view.print_record clone
+    @console_view.print_record clone
   end
 
   def make_complete record
@@ -162,7 +166,7 @@ class Controller
     sign = work_quota < 0 ? '' : '+'
     clone["work_quota"] = "#{sign}#{work_quota}"
     if is_friday? record["date"]
-      record_index = @@hash_array.index(record)
+      record_index = @hash_array.index(record)
       week_total = calculate_week_total  record_index
       clone["week_total"] = "#{week_total}"
     end
@@ -223,8 +227,8 @@ class Controller
     week_total = 0
     5.times do
       if record_index >= 0
-        break_total = calculate_break_total  @@hash_array[record_index]
-        day_total = calculate_day_total @@hash_array[record_index], break_total
+        break_total = calculate_break_total  @hash_array[record_index]
+        day_total = calculate_day_total @hash_array[record_index], break_total
         week_total+= day_total
         record_index -= 1
       end
@@ -293,8 +297,8 @@ class Controller
   end
 
   def export_sheet
-    string = @@hash_array[0]['date']
-    name, carryover = @@console_view.input_export_data
+    string = @hash_array[0]['date']
+    name, carryover = @console_view.input_export_data
     month = extract_month_from string
     total_of_hours = weekdays_count string
     save_axlsx name, month, carryover, total_of_hours
@@ -353,7 +357,7 @@ class Controller
       sheet.add_row []
 
       worked_hours = 0
-      @@hash_array.each do |record|
+      @hash_array.each do |record|
         day = day_german record['date']
         clone = make_complete record
         sheet.add_row [

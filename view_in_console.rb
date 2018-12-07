@@ -72,47 +72,52 @@ class ViewInConsole
   end
 
   def answer_to(question)
-    begin
+    loop do
       print question
       answer = $stdin.gets.chomp.downcase
-    end while (answer != "no") && (answer != "yes")
-    answer == 'yes'
+      return true if answer.start_with?('y')
+      return false if answer.start_with?('n')
+    end
   end
 
   def answer_special
-    answer_to 'Is it a special day?(Yes/No): '
+    answer_to 'Is it a special day?(Y/N): '
   end
 
-  def are_you_sure?
-    answer_to 'Are you sure?(Yes/No): '
+  def sure?
+    answer_to 'Are you sure?(Y/N): '
   end
 
   def add_new_record?
-    answer_to 'Add a new Record?(Yes/No): '
+    answer_to 'Add a new Record?(Y/N): '
   end
 
   def special_input
-    special = 'exit'
-    loop do
-      available_commands 1
-      special = $stdin.gets.chomp.downcase
-      break if %w[school holiday vacation ill other exit].include? special
-    end
-    special
+    puts 'Type in Comment: '
+    $stdin.gets.chomp
   end
 
   def print_record(record)
     puts '---'
     record.each do |key, value|
-      puts key + ' : ' + value
+      puts "#{key} : #{value}"
     end
     puts '---'
   end
 
-  def print_all_records(records)
-    records.each do |record|
-      puts print_record record
+  def print_record_line(record)
+    print "\n"
+    record.each do |key, value|
+      print value.empty? ? ' |          ' : " |   #{value}  " unless key == 'special'
     end
+  end
+
+  def print_all_records(records)
+    print ' |      Date      | Start day |  End day  |Break start| Break end |   Comment'
+    records.each do |record|
+      print_record_line record
+    end
+    puts "\n\n"
   end
 
   def print_record_count(num, file_name)
