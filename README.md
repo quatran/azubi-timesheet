@@ -1,2 +1,4 @@
-# Ruby_proj_timetable
+# SUSE Timesheets made easy
+
+### Contributions / Improvements are welcome
 
