@@ -4,7 +4,7 @@
 
 #### 1. Clone the repo
 
-+ `git clone gitlab@gitlab.suse.de:eroca/timetable-azubi.git`
++ `git clone gitlab@gitlab.suse.de:eroca/azubi-timesheet.git`
 
 #### 2. Install dependencies
 
