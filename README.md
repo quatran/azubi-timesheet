@@ -8,7 +8,7 @@
 
 #### 2. Install dependencies
 
-+ `sudo zypper in ruby-devel libxml2-devel libxslt-devel`
++ `sudo zypper in ruby-devel libxml2-devel       # maybe also: libxslt-devel`
 + `sudo gem install nokogiri`
 + `sudo gem install axlsx`
 
