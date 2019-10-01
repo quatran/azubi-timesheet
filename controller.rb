@@ -46,7 +46,7 @@ class Controller
         sort_array
         export_sheet
       when 'open', 'libreoffice'
-        open_in_libreoffice
+        open_timesheet
       when 'help', 'clear'
         @console_view.clear_console
         @console_view.available_commands 0
@@ -58,8 +58,8 @@ class Controller
     end
   end
 
-  def open_in_libreoffice
-    system 'libreoffice export/timetable.xlsx' if @console_view.answer_to("\n Open LibreOffice?(yes/no) ")
+  def open_timesheet
+    system 'xdg-open export/timetable.xlsx' if @console_view.answer_to("\n Open timesheet?(yes/no) ")
   end
 
   def sort_array
