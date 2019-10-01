@@ -149,7 +149,6 @@ class Controller
   end
 
   def print_full_record record
-
     clone = make_complete record
     @console_view.print_record clone
   end
@@ -236,34 +235,32 @@ class Controller
     return week_total
   end
 
-  def extract_month_from string
-    date = Date.parse string
-    year = date.year
+  def month_german date
     case date.month
     when 1
-      return "Januar #{year}"
+      return "Januar"
     when 2
-      return "Februar #{year}"
+      return "Februar"
     when 3
-      return "März #{year}"
+      return "März"
     when 4
-      return "April #{year}"
+      return "April"
     when 5
-      return "Mai #{year}"
+      return "Mai"
     when 6
-      return "Juni #{year}"
+      return "Juni"
     when 7
-      return "Juli #{year}"
+      return "Juli"
     when 8
-      return "August #{year}"
+      return "August"
     when 9
-      return "September #{year}"
+      return "September"
     when 10
-      return "Oktober #{year}"
+      return "Oktober"
     when 11
-      return "November #{year}"
+      return "November"
     when 12
-      return "Dezember #{year}"
+      return "Dezember"
     end
   end
 
@@ -276,8 +273,7 @@ class Controller
     end
   end
 
-  def weekdays_count string
-    date = Date.parse string
+  def weekdays_count date
     d1 = Date.new(date.year, date.month, 1)
     d2 = Date.new(date.year, date.month, -1)
     wdays = [0, 6]
@@ -297,16 +293,23 @@ class Controller
   end
 
   def export_sheet
-    string = @hash_array[0]['date']
+    date = @hash_array[0]['date']
+    date = Date.parse date
+    year = date.year
     name, carryover = @console_view.input_export_data
-    month = extract_month_from string
-    total_of_hours = weekdays_count string
-    save_axlsx name, month, carryover, total_of_hours
+    month_ger = month_german date
+    total_of_hours = weekdays_count date
+    timesheet = create_sheet name, month_ger, year, carryover, total_of_hours
+
+    FileUtils.mkdir_p 'export' unless File.exist? 'export'
+    #filename = `echo $(date +"%_Y_%_m")_${USER}_timetable.xlsx`.chomp
+    filename = 'timetable.xlsx'
+    timesheet.serialize("export/#{filename}")
   end
 
-  def save_axlsx name, month, carryover, total_of_hours
-    p = Axlsx::Package.new
-    wb = p.workbook
+  def create_sheet name, month_ger, year, carryover, total_of_hours
+    axlsx_package = Axlsx::Package.new
+    wb = axlsx_package.workbook
     setup = {:fit_to_width => 1,:fit_to_height => 1, :orientation => :portrait, :paper_height => "297mm", :paper_width => "210mm"}
     options = {:grid_lines => false}
     wb.add_worksheet(:name => "SUSE Timesheet", :page_setup => setup, :print_options => options) do |sheet|
@@ -342,7 +345,7 @@ class Controller
       sheet.merge_cells('D8:G8')
 
       sheet.add_row [
-        '', '', 'Monat:', month, '', '', '', 'Stundenübertrag', '', carryover, ''
+        '', '', 'Monat:', month_ger + " #{year}" , '', '', '', 'Stundenübertrag', '', carryover, ''
       ], style: row9_style
       sheet.merge_cells('D9:G9')
       sheet.merge_cells('H9:I9')
@@ -391,7 +394,7 @@ class Controller
         '', '', 'Unterschrift Auszubildender', '', '', '',
         'Unterschrift Betreuer', '', '', '', 'Unterschrift Ausbilder'
       ]
-      #  :style =>
+
       sheet.add_row []
       sheet.add_row [
         '', '', '____________________', '', '', '', '____________________', '',
@@ -399,8 +402,7 @@ class Controller
       ]
       sheet.column_widths nil, 10, 10, 8, 8, 8, 8, 8, 8, 8, 8, 22, nil
     end
-    FileUtils.mkdir_p 'export' unless File.exist? 'export'
-    p.serialize('export/timetable.xlsx')
+    return axlsx_package
   end
 
 end
