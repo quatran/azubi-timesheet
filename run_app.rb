@@ -100,8 +100,8 @@ class Controller
   end
 
   def create_normal_record(date)
-    start_day, end_day, break_start, break_end, comment = @console_view.new_record_input
-    @model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
+    record_data = @console_view.new_record_input
+    @model.create_pretty_json_record(record_data.unshift(date))
   end
 
   def record_exists?(date)
@@ -243,37 +243,14 @@ class Controller
   end
 
   def month_german(date)
-    case date.month
-    when 1
-      'Januar'
-    when 2
-      'Februar'
-    when 3
-      'März'
-    when 4
-      'April'
-    when 5
-      'Mai'
-    when 6
-      'Juni'
-    when 7
-      'Juli'
-    when 8
-      'August'
-    when 9
-      'September'
-    when 10
-      'Oktober'
-    when 11
-      'November'
-    when 12
-      'Dezember'
-    end
+    months_german = %w[Dezember Januar Februar März April Mai Juni Juli August
+                       September Oktober November Dezember]
+    months_german[date.to_i]
   end
 
   def add_image_from(path, sheet)
     img = File.expand_path(path, __FILE__)
-    sheet.add_image(:image_src => img, :noSelect => true, :noMove => true) do |image|
+    sheet.add_image(image_src: img, noSelect: true, noMove: true) do |image|
       image.width = 261
       image.height = 118
     end
@@ -283,29 +260,27 @@ class Controller
     d1 = Date.new(date.year, date.month, 1)
     d2 = Date.new(date.year, date.month, -1)
     wdays = [0, 6]
-    weekdays = (d1..d2).reject { |day| wdays.include? day.wday}
-    return weekdays.count * 8
+    weekdays = (d1..d2).reject { |day| wdays.include? day.wday }
+    weekdays.count * 8
   end
 
   def add_beginning_rows_to(sheet, big_bold_style)
     add_image_from '../suse_logo.png', sheet
     5.times { sheet.add_row [] }
 
-    sheet.add_row ['', 'Stundenzettel'], :style => [0, big_bold_style]
+    sheet.add_row ['', 'Stundenzettel'], style: [0, big_bold_style]
     sheet.merge_cells('B6:K6')
     sheet.add_row []
-
-
   end
 
   def export_sheet
     date = @hash_array[0]['date']
-    date = Date.parse date
+    date = Date.parse(date)
     year = date.year
     name, carryover = @console_view.input_export_data
-    month_ger = month_german date
-    total_of_hours = weekdays_count date
-    timesheet = create_sheet name, month_ger, year, carryover, total_of_hours
+    month_ger = month_german(date.month)
+    total_of_hours = weekdays_count(date)
+    timesheet = create_sheet(name, month_ger, year, carryover, total_of_hours)
 
     FileUtils.mkdir_p 'export' unless File.exist? 'export'
     # filename = `echo $(date +"%_Y_%_m")_${USER}_timetable.xlsx`.chomp
@@ -313,37 +288,49 @@ class Controller
     timesheet.serialize("export/#{filename}")
   end
 
-  def create_sheet name, month_ger, year, carryover, total_of_hours
+  def create_sheet(name, month_ger, year, carryover, total_of_hours)
     axlsx_package = Axlsx::Package.new
     wb = axlsx_package.workbook
-    setup = {:fit_to_width => 1,:fit_to_height => 1, :orientation => :portrait, :paper_height => "297mm", :paper_width => "210mm"}
-    options = {:grid_lines => false}
-    wb.add_worksheet(:name => "SUSE Timesheet", :page_setup => setup, :print_options => options) do |sheet|
-      center = { :horizontal=> :center, :vertical => :center }
-      default_cell = { :alignment => center, :sz => 10 }
-      hair_border =  { :style => :hair, :color => "00" }
-      border_cell = default_cell.merge({:border => hair_border})
+    setup = { fit_to_width: 1, fit_to_height: 1, orientation: :portrait,
+              paper_height: '297mm', paper_width: '210mm' }
+    options = { grid_lines: false}
+    wb.add_worksheet(name: 'SUSE Timesheet', page_setup: setup, print_options: options) do |sheet|
+      center = { horizontal: :center, vertical: :center }
+      default_cell = { alignment: center, sz: 10 }
+      hair_border =  { style: :hair, color: '00' }
+      border_cell = default_cell.merge(border: hair_border)
 
-      big_bold_style = sheet.styles.add_style :sz => 16, :b => true, :alignment => center
+      big_bold_style = sheet.styles.add_style sz: 16, b: true, alignment: center
 
       def_style = sheet.styles.add_style default_cell
-      def_b_style = sheet.styles.add_style default_cell.merge({:b => true})
+      def_b_style = sheet.styles.add_style default_cell.merge(b: true)
 
       cell_style = sheet.styles.add_style border_cell
-      cell_b_style = sheet.styles.add_style border_cell.merge(:b => true)
+      cell_b_style = sheet.styles.add_style border_cell.merge(b: true)
 
-      cell_green_style = sheet.styles.add_style border_cell.merge(:bg_color => '7DC148')
-      cell_b_green_style = sheet.styles.add_style border_cell.merge(:b => true, :bg_color => '7DC148')
+      cell_green_style = sheet.styles.add_style border_cell.merge(bg_color: '7DC148')
+      cell_b_green_style = sheet.styles.add_style border_cell.merge(
+        b: true, bg_color: '7DC148'
+      )
 
-      row8_style = [0, 0, cell_b_style, cell_b_style, 0,0,cell_b_style]
-      row9_style = [0, 0, cell_b_style, cell_b_style, 0,0,0, cell_b_style, 0, cell_b_green_style,cell_b_green_style]
-      row11_style = [0, 0, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
-        cell_b_style, cell_b_style, cell_b_style, cell_b_style]
+      row8_style = [0, 0, cell_b_style, cell_b_style, 0, 0, cell_b_style]
+      row9_style = [0, 0, cell_b_style, cell_b_style, 0, 0, 0, cell_b_style, 0,
+                    cell_b_green_style, cell_b_green_style]
+      row11_style = [
+        0, 0, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
+        cell_b_style, cell_b_style, cell_b_style, cell_b_style, cell_b_style,
+        cell_b_style
+      ]
 
-      record_style = [0 ,cell_style ,cell_style, cell_green_style ,cell_green_style, cell_green_style,
-        cell_green_style ,cell_style, cell_style ,cell_style, cell_style, cell_style, 0]
-      carryover_style = [0,0,0,0,0,0,0, cell_b_style,0, cell_style, cell_style]
-      soll_style = [0,0, def_b_style, def_style, 0,0,0, def_b_style, def_style]
+      record_style = [
+        0, cell_style, cell_style, cell_green_style, cell_green_style,
+        cell_green_style, cell_green_style, cell_style, cell_style, cell_style,
+        cell_style, cell_style, 0
+      ]
+      carryover_style = [0, 0, 0, 0, 0, 0, 0, cell_b_style, 0, cell_style,
+                         cell_style]
+      soll_style = [0, 0, def_b_style, def_style, 0, 0, 0, def_b_style,
+                    def_style]
 
       add_beginning_rows_to sheet, big_bold_style
 
@@ -351,7 +338,8 @@ class Controller
       sheet.merge_cells('D8:G8')
 
       sheet.add_row [
-        '', '', 'Monat:', month_ger + " #{year}" , '', '', '', 'Stundenübertrag', '', carryover, ''
+        '', '', 'Monat:', month_ger + " #{year}", '', '', '', 'Stundenübertrag',
+        '', carryover, ''
       ], style: row9_style
       sheet.merge_cells('D9:G9')
       sheet.merge_cells('H9:I9')
@@ -360,7 +348,7 @@ class Controller
 
       sheet.add_row [
         '', '', 'Datum', 'Kommt', 'Geht', 'P-Beginn', 'P-Ende', 'Pause', 'AZ',
-        'GES-Stunden', '', 'Kommentar         '
+        'GES-Stunden', '', 'Kommentar         ' # white space makes cell larger
       ], style: row11_style
       sheet.merge_cells('J11:K11')
       sheet.add_row []
@@ -410,7 +398,6 @@ class Controller
     end
     axlsx_package
   end
-
 end
 
 # Model class of the MVC-Model
@@ -424,7 +411,7 @@ class Model
     parse_json_file read_file file_name
   end
 
-  def parse_json_file file
+  def parse_json_file(file)
     file.empty? ? [] : (JSON.parse file)
   end
 
@@ -432,7 +419,8 @@ class Model
     JSON.pretty_generate json_array
   end
 
-  def create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
+  def create_pretty_json_record(record_data)
+    date, start_day, end_day, break_start, break_end, comment = record_data
     {
       'date' => date,
       'start_day' => start_day,
@@ -444,7 +432,8 @@ class Model
   end
 
   def create_special_json_record(date, special_case)
-    record = create_pretty_json_record(date, '', '', '', '', special_case)
+    record_data = date, '', '', '', '', special_case
+    record = create_pretty_json_record(record_data)
     record['special'] = 'true'
     record
   end
