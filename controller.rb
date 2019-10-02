@@ -3,7 +3,6 @@ load 'view_in_console.rb'
 require 'axlsx'
 require 'fileutils'
 class Controller
-
   def initialize(json_file_name)
     @json_file_name = json_file_name
     @model = Model.new(json_file_name)
@@ -24,7 +23,7 @@ class Controller
         append add_new_record
       when 'edit'
         date = @console_view.date_input
-        if(record_exists? date)
+        if record_exists? date
           (edit existing_record date)
         else
           @console_view.record_doesnt_exist
@@ -33,12 +32,12 @@ class Controller
       when 'count', 'printnum', 'printnumber'
         print_record_count
       when 'printone', 'printonerecord'
-          date = @console_view.date_input
+        date = @console_view.date_input
           (record_exists? date) ? (print_full_record existing_record date) : (@console_view.record_doesnt_exist)
       when 'printall', 'printallrecords'
         @console_view.print_all_records @hash_array
       when 'delete'
-          date = @console_view.date_input
+        date = @console_view.date_input
           (record_exists? date) ? (delete_record_with date) : (@console_view.record_doesnt_exist)
       when 'sort'
         sort_array
@@ -80,11 +79,11 @@ class Controller
 
   def add_new_record
     date = @console_view.date_input
-    if (record_exists? date)
-      @console_view.record_exists
-    else
+    unless record_exists? date
       return @console_view.answer_special ? (create_special_record date) : (create_normal_record date)
     end
+
+    @console_view.record_exists
   end
 
   def create_special_record(date)
@@ -95,19 +94,19 @@ class Controller
   end
 
   def create_normal_record(date)
-    start_day, end_day, break_start, break_end, comment=  @console_view.new_record_input
-    return @model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
+    start_day, end_day, break_start, break_end, comment = @console_view.new_record_input
+    @model.create_pretty_json_record(date, start_day, end_day, break_start, break_end, comment)
   end
 
   def record_exists?(date)
     @hash_array.any? { |hash| hash['date'].include?(date) }
   end
 
-  def existing_record date
-    return @hash_array.select { |hash| hash['date'].include?(date) }.first
+  def existing_record(date)
+    @hash_array.select { |hash| hash['date'].include?(date) }.first
   end
 
-  def delete_record_with value
+  def delete_record_with(value)
     print_full_record(existing_record(value))
     @model.delete_record_with value, @hash_array if @console_view.sure?
   end
@@ -121,7 +120,7 @@ class Controller
     return true
   end
 
-  def edit record
+  def edit(record)
     print_full_record record
     date = record['date']
     if @console_view.answer_special
@@ -148,36 +147,37 @@ class Controller
     @console_view.print_record_count num, @json_file_name
   end
 
-  def print_full_record record
+  def print_full_record(record)
     clone = make_complete record
     @console_view.print_record clone
   end
 
-  def make_complete record
+  def make_complete(record)
     clone = record.clone
 
     break_total = calculate_break_total record
     day_total = calculate_day_total record, break_total
     work_quota = calculate_work_quota day_total
 
-    clone["break_total"] = "#{break_total}"
-    clone["day_total"] = "#{day_total}"
-    sign = work_quota < 0 ? '' : '+'
-    clone["work_quota"] = "#{sign}#{work_quota}"
-    if is_friday? record["date"]
+    clone['break_total'] = break_total.to_s
+    clone['day_total'] = day_total.to_s
+    sign = work_quota.negative? ? '' : '+'
+    clone['work_quota'] = "#{sign}#{work_quota}"
+    if is_friday? record['date']
       record_index = @hash_array.index(record)
-      week_total = calculate_week_total  record_index
-      clone["week_total"] = "#{week_total}"
+      week_total = calculate_week_total(record_index)
+      clone['week_total'] = week_total.to_s
     end
     return clone
   end
 
-  def hour_from string
+  def hour_from(string)
     return DateTime.strptime(string, '%H:%M').hour
   rescue ArgumentError
     return 0
   end
-  def min_from string
+
+  def min_from(string)
     return DateTime.strptime(string, '%H:%M').min
   rescue ArgumentError
     return 0
@@ -189,14 +189,14 @@ class Controller
     return (hour*60 + min)/60.to_f
   end
 
-  def calculate_break_total record
+  def calculate_break_total(record)
     return 0.0 if record.has_key? "special"
     break_start = record["break_start"]
     break_end = record["break_end"]
     return difference_between(break_start, break_end)
   end
 
-  def calculate_day_total record, break_total
+  def calculate_day_total(record, break_total)
     return 8.0 if record.has_key? "special"
     start_day = record["start_day"]
     end_day = record["end_day"]
@@ -204,16 +204,16 @@ class Controller
     return day_total
   end
 
-  def calculate_work_quota day_total
+  def calculate_work_quota(day_total)
     return day_total.to_f - 8
   end
 
-  def is_friday? string
+  def is_friday?(string)
     date = Date.parse string
     return date.friday?
   end
 
-  def day_german string
+  def day_german(string)
     date = Date.parse string
     return 'Montag' if date.monday?
     return 'Dienstag' if date.tuesday?
@@ -222,7 +222,7 @@ class Controller
     return 'Freitag' if date.friday?
   end
 
-  def calculate_week_total record_index
+  def calculate_week_total(record_index)
     week_total = 0
     5.times do
       if record_index >= 0
@@ -235,7 +235,7 @@ class Controller
     return week_total
   end
 
-  def month_german date
+  def month_german(date)
     case date.month
     when 1
       return "Januar"
@@ -264,16 +264,15 @@ class Controller
     end
   end
 
-  def add_image_from path, sheet
+  def add_image_from(path, sheet)
     img = File.expand_path(path, __FILE__)
     sheet.add_image(:image_src => img, :noSelect => true, :noMove => true) do |image|
-      image.width=261
-      image.height=118
-      #image.start_at 1, 1
+      image.width = 261
+      image.height = 118
     end
   end
 
-  def weekdays_count date
+  def weekdays_count(date)
     d1 = Date.new(date.year, date.month, 1)
     d2 = Date.new(date.year, date.month, -1)
     wdays = [0, 6]
@@ -281,12 +280,12 @@ class Controller
     return weekdays.count * 8
   end
 
-  def add_beginning_rows_to sheet, big_bold_style
+  def add_beginning_rows_to(sheet, big_bold_style)
     add_image_from '../suse_logo.png', sheet
-    5.times {sheet.add_row []}
+    5.times { sheet.add_row [] }
 
     sheet.add_row ['', 'Stundenzettel'], :style => [0, big_bold_style]
-    sheet.merge_cells("B6:K6")
+    sheet.merge_cells('B6:K6')
     sheet.add_row []
 
 
@@ -302,7 +301,7 @@ class Controller
     timesheet = create_sheet name, month_ger, year, carryover, total_of_hours
 
     FileUtils.mkdir_p 'export' unless File.exist? 'export'
-    #filename = `echo $(date +"%_Y_%_m")_${USER}_timetable.xlsx`.chomp
+    # filename = `echo $(date +"%_Y_%_m")_${USER}_timetable.xlsx`.chomp
     filename = 'timesheet.xlsx'
     timesheet.serialize("export/#{filename}")
   end
