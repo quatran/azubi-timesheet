@@ -2,5 +2,5 @@
 
 load 'controller.rb'
 
-controller = Controller.new('timetable.json')
+controller = Controller.new('timesheet.json')
 controller.start

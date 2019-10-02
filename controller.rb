@@ -59,7 +59,7 @@ class Controller
   end
 
   def open_timesheet
-    system 'xdg-open export/timetable.xlsx' if @console_view.answer_to("\n Open timesheet?(yes/no) ")
+    system('xdg-open export/timesheet.xlsx') if @console_view.answer_to("\n Open timesheet?(yes/no) ")
   end
 
   def sort_array
@@ -303,7 +303,7 @@ class Controller
 
     FileUtils.mkdir_p 'export' unless File.exist? 'export'
     #filename = `echo $(date +"%_Y_%_m")_${USER}_timetable.xlsx`.chomp
-    filename = 'timetable.xlsx'
+    filename = 'timesheet.xlsx'
     timesheet.serialize("export/#{filename}")
   end
 

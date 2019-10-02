@@ -1,6 +1,6 @@
 class ViewInConsole
   def start_view
-    print "\n\tAZUBI Timetable\n What would you like to do? "
+    print "\n\tAZUBI Timesheet\n What would you like to do? "
     $stdin.gets.chomp.downcase
   end
 
