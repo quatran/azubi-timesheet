@@ -516,23 +516,23 @@ class ViewInConsole
   end
 
   def date_input
-    valid_date_input 'Date(dd.mm.yyyy): '
+    valid_data_input 'Date(dd.mm.yyyy): ', '%d.%m.%Y'
   end
 
   def start_day_input
-    valid_time_input 'Came to work at(hh:mm): '
+    valid_data_input 'Came to work at(hh:mm): ', '%H:%M'
   end
 
   def end_day_input
-    valid_time_input 'Left work at: '
+    valid_data_input 'Left work at: ', '%H:%M'
   end
 
   def break_start_input
-    valid_time_input 'Went for a break at: '
+    valid_data_input 'Went for a break at: ', '%H:%M'
   end
 
   def break_end_input
-    valid_time_input 'Came back from break at: '
+    valid_data_input 'Came back from break at: ','%H:%M'
   end
 
   def comment_input
@@ -634,44 +634,28 @@ class ViewInConsole
     system 'clear'
   end
 
-  def valid_date_input message
+  def valid_data_input(message, format)
     begin
       print message
       input = $stdin.gets.chomp.downcase
-    end while !valid_date? input
+    end while !valid_data?(input, format)
     return input
-  end
-
-  def valid_time_input message
-    begin
-      print message
-      input = $stdin.gets.chomp.downcase
-    end while !valid_time? input
-    return input
-  end
-
-  def valid_date? string
-    format = '%d.%m.%Y'
-    DateTime.strptime(string, format)
+end
+end
+  
+  def valid_data?(data, format)
+    DateTime.strptime(data, format)
     true
   rescue ArgumentError
     false
   end
 
-  def valid_time?(string)
-    format = '%H:%M'
-    DateTime.strptime(string, format)
-    true
-  rescue ArgumentError
-    false
-  end
 
   def numeric?(string)
     !Float(string).nil?
   rescue ArgumentError
     false
   end
-end
-
+  
 controller = Controller.new('timesheet.json')
 controller.start
