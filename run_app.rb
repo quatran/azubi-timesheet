@@ -516,23 +516,23 @@ class ViewInConsole
   end
 
   def date_input
-    valid_data_input 'Date(dd.mm.yyyy): ', '%d.%m.%Y'
+    valid_input 'Date(dd.mm.yyyy): ', '%d.%m.%Y'
   end
 
   def start_day_input
-    valid_data_input 'Came to work at(hh:mm): ', '%H:%M'
+    valid_input 'Came to work at(hh:mm): ', '%H:%M'
   end
 
   def end_day_input
-    valid_data_input 'Left work at: ', '%H:%M'
+    valid_input 'Left work at: ', '%H:%M'
   end
 
   def break_start_input
-    valid_data_input 'Went for a break at: ', '%H:%M'
+    valid_input 'Went for a break at: ', '%H:%M'
   end
 
   def break_end_input
-    valid_data_input 'Came back from break at: ','%H:%M'
+    valid_input 'Came back from break at: ','%H:%M'
   end
 
   def comment_input
@@ -634,7 +634,7 @@ class ViewInConsole
     system 'clear'
   end
 
-  def valid_data_input(message, format)
+  def valid_input(message, format)
     begin
       print message
       input = $stdin.gets.chomp.downcase
